@@ -20,7 +20,8 @@ spec:
     spec:
       containers:
         - name: converter
-          image: nasi101/converter
+          image: converter
+          imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: converter-configmap

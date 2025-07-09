@@ -20,7 +20,8 @@ spec:
     spec:
       containers:
         - name: notification
-          image: nasi101/notification
+          image: notification
+          imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: notification-configmap
