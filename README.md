@@ -210,7 +210,9 @@ Original repository: [N4si/microservices-python-app](https://github.com/N4si/mic
 
 ## 📮 Contact
 
-Built with ❤️ by **Rabie**  
-GitHub: [@rabie01](https://github.com/rabie01)
+Built with ❤️ by **Rabie Rabie**  
+📧 [rabeea2100@yahoo.com](mailto:rabeea2100@yahoo.com)  
+🔗 [myresume.rabietech.dpdns.org](https://myresume.rabietech.dpdns.org)  
+🐙 [GitHub Profile](https://github.com/rabie01)
 
 Open an issue or PR for contributions!
