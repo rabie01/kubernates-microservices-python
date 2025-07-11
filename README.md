@@ -4,7 +4,6 @@
 [![Kind](https://img.shields.io/badge/k8s-kind-blue?style=flat-square&logo=kubernetes)](#)
 [![Helm](https://img.shields.io/badge/helm-ready-0f6ab4?style=flat-square&logo=helm)](#)
 [![Taskfile](https://img.shields.io/badge/taskfile-powered-239120?style=flat-square&logo=task)](https://taskfile.dev)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker)](#)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-ready-ff6600?style=flat-square&logo=rabbitmq)](#)
 [![MongoDB](https://img.shields.io/badge/MongoDB-ready-47A248?style=flat-square&logo=mongodb)](#)
@@ -28,35 +27,148 @@ The system converts uploaded MP4 videos into MP3 audio and emails the result usi
 
 ---
 
-## 🧪 4-Command Quickstart
+## 🧰 Devbox Environment
 
-You can get the whole system up and running using just **four Taskfile commands**:
+[Devbox](https://www.jetpack.io/devbox/) simplifies your development environment using Nix. A `devbox.json` is included to help automate setup.
+
+### 🔧 Why Devbox?
+
+- Reproducible local development
+- No manual installation of tools
+- Easy provisioning on WSL or new systems
+
+### 📦 Installed Packages
+
+- `kubectl`, `kind`, `helm`, `task`
+- `python311`, `pip`, `jq`, `curl`, `zip`, `git`
+- `mongosh`, `psql`, and more
+
+### 🐧 Install on WSL
 
 ```bash
-# 1️⃣ Create Kind cluster
-cd kind-installation-and-setup/
+curl -fsSL https://get.jetpack.io/devbox | bash
+cd your-project-directory/
+devbox shell
+```
+
+> Add more tools via `devbox add <tool>`.
+
+---
+
+## 🛠️ Taskfile: Automation Made Easy
+
+**Taskfile** is a YAML-based task runner like `Makefile`, used here to automate:
+
+- Cluster creation
+- Helm chart installs
+- Microservice deployment
+- API testing
+
+### 🔧 Install Task
+
+```bash
+# macOS
+brew install go-task/tap/go-task
+
+# Linux
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+```
+
+### 💡 Common Commands
+
+```bash
 task kind:01-create-cluster
-
-# 2️⃣ Install Helm charts (Postgres, MongoDB, RabbitMQ, etc.)
-cd ../Helm_charts/
 task helm:install-all
-
-# 3️⃣ Deploy microservices (auth, gateway, converter, notification)
-cd ../src/
 task svc:install-all
-
-# 4️⃣ Run full API test flow (login → upload → download)
 task api:test-all
 ```
 
-> 📝 Make sure to update the `.env` file in each directory if needed.
+Located in:
+
+```
+kind-installation-and-setup/
+Helm_charts/
+src/
+```
+
+---
+
+## 🧱 KIND Cluster Overview
+
+This project runs locally on a **KIND (Kubernetes IN Docker)** cluster with a custom configuration to support service exposure, Helm deployments, and local development.   
+
+Kind lets you spin up a full Kubernetes cluster inside Docker containers — no need for cloud services or VMs.  
+
+If running on windows, make sure Docker Desktop  is installed.  
+
+### 🗺️ Cluster Nodes
+
+```text
+kind-control-plane
+kind-worker
+kind-worker2
+kind-worker3
+```
+
+Check:
+
+```bash
+kubectl get nodes -o wide
+```
+
+### ⚙️ Cluster Creation
+
+Config: `kind-installation-and-setup/kind-config.yaml`
+
+```bash
+kind create cluster or
+task kind:01-create-cluster
+```
+
+This command:
+
+Pulls a lightweight Kubernetes Docker image from docker hub
+
+Starts a control plane node (as a Docker container)
+
+Sets up kubectl context to point to the new cluster
+
+### 🌐 Exposed Ports
+
+| Service             | Container | NodePort | Purpose                                |
+|---------------------|-----------|----------|----------------------------------------|
+| API Gateway         | 5000      | 30002    | Login, upload, download endpoints      |
+| PostgreSQL          | 5432      | 30003    | Used internally by auth-server         |
+| RabbitMQ Mgmt UI    | 15672     | 30004    | Debug queue processing                 |
+| MongoDB             | 27017     | 30005    | File storage via GridFS                |
+
+> Exposing services allows local tools (e.g., curl, browsers, psql) to communicate directly for testing/debugging.
+
+---
+
+## ⚡ Quickstart in 4 Commands
+
+```bash
+cd kind-installation-and-setup/
+task kind:01-create-cluster
+
+cd ../Helm_charts/
+task helm:install-all
+
+cd ../src/
+task svc:install-all
+
+task api:test-all
+```
+
+Update `.env` before running.
 
 ---
 
 ## 🏗️ Architecture
 
 <p align="center">
-  <img src="./Project documentation/ProjectArchitecture.png" width="600" title="Architecture" alt="Architecture">
+  <img src="./Project documentation/ProjectArchitecture.png" width="600" alt="Architecture">
 </p>
 
 ---
@@ -65,148 +177,121 @@ task api:test-all
 
 ```text
 .
-├── kind-installation-and-setup/     # KIND cluster setup and configs
+├── kind-installation-and-setup/
 │   ├── kind-config.yaml
-│   └── Taskfile.yml                 # kind:01-create-cluster
-│
-├── Helm_charts/                     # Helm charts for services
+│   └── Taskfile.yml
+├── Helm_charts/
 │   ├── Postgres/
 │   ├── MongoDB/
 │   ├── RabbitMQ/
-│   └── Taskfile.yml                 # helm:install-all
-│
-├── src/                             # Source code and manifests
+│   └── Taskfile.yml
+├── src/
 │   ├── auth/
 │   ├── gateway/
 │   ├── converter/
 │   ├── notification/
-│   ├── assets/                      # Uploaded MP4s / downloaded MP3s
-│   ├── Taskfile.yml                 # svc:install-all, api:test-all
-├── .env                             # ENV configuration
+│   ├── assets/
+│   └── Taskfile.yml
+├── .env
 ```
-
-> **Note:**  
-> Normally, `.env` should be added to `.gitignore` and an `env.example` used instead, but here it is included for easier testing and minimal setup.
-
 
 ---
 
-## ⚙️ Components
+## 🧩 Microservice Components
 
-| Microservice       | Description |
-|--------------------|-------------|
-| `auth-server`      | Issues JWT tokens via login |
-| `gateway-server`   | Public API (login, upload, download) |
-| `converter-module` | Converts MP4 → MP3 via RabbitMQ |
-| `notification-server` | Sends email with file ID via RabbitMQ |
-| `RabbitMQ`         | Queueing layer (`video` / `mp3` queues) |
-| `MongoDB`          | Stores video/audio (via GridFS) |
-| `PostgreSQL`       | Stores user data and login sessions |
+| Name               | Role                                   |
+|--------------------|----------------------------------------|
+| `auth-server`      | JWT login auth                         |
+| `gateway-server`   | API Gateway for user interaction       |
+| `converter-module` | Converts MP4 to MP3 using RabbitMQ     |
+| `notification`     | Sends email with MP3 file ID           |
+| `RabbitMQ`         | Message broker                         |
+| `MongoDB`          | Stores files via GridFS                |
+| `PostgreSQL`       | Stores users, sessions                 |
 
 ---
 
-## 🔑 API Endpoints
+## 🔑 API Usage
 
-### 🔐 Login
-
-```http
-POST http://localhost:30002/login
-```
+### Login
 
 ```bash
-curl -X POST http://localhost:30002/login -u <email>:<password>
+curl -X POST http://localhost:30002/login -u email:password
 ```
 
-Response: JWT Token
-
----
-
-### ⬆️ Upload
-
-```http
-POST http://localhost:30002/upload
-```
+### Upload
 
 ```bash
-curl -X POST -F 'file=@./video.mp4'   -H "Authorization: Bearer <JWT Token>"   http://localhost:30002/upload
+curl -X POST -F 'file=@./video.mp4' -H "Authorization: Bearer <TOKEN>" http://localhost:30002/upload
 ```
 
----
-
-### ⬇️ Download
-
-```http
-GET http://localhost:30002/download?fid=<file_id>
-```
+### Download
 
 ```bash
-curl --output video.mp3 -X GET   -H "Authorization: Bearer <JWT Token>"   "http://localhost:30002/download?fid=<file_id>"
-```
-
-📩 The file ID will be emailed to the user once processing is complete.
-
----
-
-## 🛠️ Notification Email Configuration
-
-To configure Gmail notifications for the `notification-server`:
-
-1. Go to your Google Account → **Security**
-2. Enable **2-Step Verification**
-3. Under **App passwords**, create one for this app
-4. Add the app password and your Gmail in:
-   ```yaml
-   src/notification/manifest/secret.yaml
-   ```
-
----
-
-## 📋 Additional Taskfile Commands
-
-```bash
-task api:login         # Get JWT and save to .jwt_token
-task api:upload        # Upload video from ./assets
-task api:download -- FILE_ID=<your_id>  # Download audio
-task kind:04           # Destroys the KIND cluster
+curl -o audio.mp3 -H "Authorization: Bearer <TOKEN>" "http://localhost:30002/download?fid=<id>"
 ```
 
 ---
 
-## 🧱 Helm Notes
+## 📧 Email Notification Setup
 
-Helm charts are used for:
+Configure Gmail via:
+
+1. Enable 2FA
+2. Create App Password
+3. Add credentials to `src/notification/manifest/secret.yaml`
+
+---
+
+## 🛠️ Helm Usage
+
+Modify values under:
+
+```text
+Helm_charts/*/values.yaml
+```
+
+Services:
 
 - PostgreSQL
 - MongoDB
-- RabbitMQ (with automated queue creation)
-
-You can configure their values via `Helm_charts/**/values.yaml`.
+- RabbitMQ
 
 ---
 
-## 🧼 Destroy Infrastructure
+## 🔁 Taskfile Commands Reference
 
 ```bash
-cd kind-installation-and-setup
+task api:login
+task api:upload
+task api:download -- FILE_ID=<id>
+```
+
+---
+
+## 🧼 Clean Up
+
+```bash
+cd kind-installation-and-setup/
 task kind:04-delete-cluster
 ```
 
 ---
 
-## 🙏 Acknowledgements
+## 🙌 Acknowledgements
 
-This project is built on top of the excellent work by [@N4si](https://github.com/N4si).  
-Original repository: [N4si/microservices-python-app](https://github.com/N4si/microservices-python-app)
+Based on: [@N4si/microservices-python-app](https://github.com/N4si/microservices-python-app)
 
-### Modifications and Enhancements:
+Enhancements by Rabie:
 
-- Deployed using **KIND** (Kubernetes IN Docker)
-- Fully automated setup using **Taskfile**
-- Infrastructure provisioned via **Helm charts**
-- Environment variables managed via `.env` files
-- Improved testing flow with token handling and upload/download validation
-- Structured directory layout and service manifests
-- Complete documentation and usage examples
+- KIND support
+- Taskfile automation
+- Devbox env setup
+- Helm-based provisioning
+- Improved testing
+- Documentation
+
+---
 
 ## 📮 Contact
 
@@ -215,4 +300,4 @@ Built with ❤️ by **Rabie Rabie**
 🔗 [myresume.rabietech.dpdns.org](https://myresume.rabietech.dpdns.org)  
 🐙 [GitHub Profile](https://github.com/rabie01)
 
-Open an issue or PR for contributions!
+Open an issue or PR to contribute!
