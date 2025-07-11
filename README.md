@@ -82,8 +82,12 @@ task api:test-all
 │   ├── notification/
 │   ├── assets/                      # Uploaded MP4s / downloaded MP3s
 │   ├── Taskfile.yml                 # svc:install-all, api:test-all
-│   └── .env                         # ENV configuration
+├── .env                             # ENV configuration
 ```
+
+> **Note:**  
+> Normally, `.env` should be added to `.gitignore` and an `env.example` used instead, but here it is included for easier testing and minimal setup.
+
 
 ---
 
