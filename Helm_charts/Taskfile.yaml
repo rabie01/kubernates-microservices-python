@@ -1,0 +1,96 @@
+version: "3.2"
+
+dotenv: ['../.env']
+
+tasks:
+  helm:install-all:
+    desc: Install all Helm charts
+    deps:
+      - helm:install-PostgreSQL
+      - postgres:init
+      - helm:install-MongoDB
+      - helm:install-RabbitMQ  
+      - rabbitmq:create-queues
+      - helm:list-all-charts 
+
+  helm:install-PostgreSQL:
+    desc: Install PostgreSQL chart
+    cmds:
+      - echo "Installing PostgreSQL chart"
+      - helm upgrade --install postgres ./Postgres --namespace $NAMESPACE --create-namespace
+
+  postgres:wait:
+    desc: Wait until PostgreSQL is ready
+    cmds:
+      - |
+        echo "⏳ Waiting for PostgreSQL to become available..."
+        for i in {1..10}; do
+          if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d authdb; then
+            echo "✅ PostgreSQL is ready!"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "❌ PostgreSQL did not become ready in time."
+        exit 1
+
+
+  postgres:init:
+    desc: Run init.sql on the authdb 
+    deps: [postgres:wait]
+    cmds:
+      - echo "📦 Applying init.sql to PostgreSQL..."
+      - PGPASSWORD=$PSQL_PASS psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d authdb -f ./Postgres/init.sql
+      # - psql "postgres://$PSQL_USER:$PSQL_PASS@$PSQL_HOST:$PSQL_PORT/authdb" -f ./Postgres/init.sql
+
+  helm:install-MongoDB:
+    desc: Install MongoDB chart
+    cmds:
+      - echo "Installing MongoDB chart"
+      - helm upgrade --install mongodb ./MongoDB --namespace $NAMESPACE --create-namespace
+
+  helm:install-RabbitMQ:
+    desc: Install RabbitMQ chart
+    cmds:
+      - echo "Installing RabbitMQ chart"
+      - helm upgrade --install rabbitmq ./RabbitMQ --namespace $NAMESPACE --create-namespace
+
+
+  rabbitmq:wait:
+    desc: "Wait for RabbitMQ to be ready"
+    cmds:
+      - |
+        echo "⏳ Waiting for RabbitMQ..."
+        for i in {1..10}; do
+          if curl -u guest:guest -s http://$RMQ_HOST:$RMQ_PORT/api/overview > /dev/null; then
+            echo "✅ RabbitMQ is ready!"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "❌ RabbitMQ not ready"
+        exit 1
+
+
+  rabbitmq:create-queues:
+    desc: "Create RabbitMQ queues: video, mp3"
+    deps: [rabbitmq:wait]
+    cmds:
+      - |
+        echo "📬 Creating queue 'video'..."
+        curl -u guest:guest -X PUT \
+        -H "content-type:application/json" \
+        http://$RMQ_HOST:$RMQ_PORT/api/queues/%2f/video \
+        -d '{"durable":true}'
+      - |
+        echo "📬 Creating queue 'mp3'..."
+        curl -u guest:guest -X PUT \
+        -H "content-type:application/json" \
+        http://$RMQ_HOST:$RMQ_PORT/api/queues/%2f/mp3 \
+        -d '{"durable":true}'
+
+  helm:list-all-charts:
+    desc: list all charts
+    cmds:
+      - echo "listing all charts"
+      - helm list -n $NAMESPACE 

@@ -1,5 +1,20 @@
 # Devops Project: video-converter
-Converting mp4 videos to mp3 in a microservices architecture.
+
+documentation is STILL UNDER DEVELOPMENT BUT YOU CAN CHECK Taskfile.yaml in kind-installation-and-setup, Helm_charts, src DIRS. ALSO MAKE SURE YOU MODIFY .env FOR YOUR ENV IF NEEDED
+
+BASICALLY YOUSHOULD BE ABLE TO GET IT RUNNING BY ONLY 4 COMMANDS FORM 3 TASKFILES
+
+  cd kind-installation-and-setup/
+  t kind:01-create-cluster 
+  cd ../Helm_charts/
+  t helm:install-all 
+  cd ../src/
+  t svc:install-all 
+  t api:test-all 
+
+
+
+Converting mp4 videos to mp3 in a microservices architecture Using KIND CLUSTER.
 
 ## Architecture
 
@@ -7,27 +22,17 @@ Converting mp4 videos to mp3 in a microservices architecture.
   <img src="./Project documentation/ProjectArchitecture.png" width="600" title="Architecture" alt="Architecture">
   </p>
 
-## Deploying a Python-based Microservice Application on AWS EKS
+## Deploying a Python-based Microservice Application on KIND CLUSTER
 
 ### Introduction
 
-This document provides a step-by-step guide for deploying a Python-based microservice application on AWS Elastic Kubernetes Service (EKS). The application comprises four major microservices: `auth-server`, `converter-module`, `database-server` (PostgreSQL and MongoDB), and `notification-server`.
+This document provides a step-by-step guide for deploying a Python-based microservice application on KIND cluster. The application comprises four major microservices: `auth-server`, `converter-module`, `database-server` (PostgreSQL and MongoDB), and `notification-server`.
 
 ### Prerequisites
 
 Before you begin, ensure that the following prerequisites are met:
+- check .env file and make sure you add your vars if need to change anything
 
-1. **Create an AWS Account:** If you do not have an AWS account, create one by following the steps [here](https://docs.aws.amazon.com/streams/latest/dev/setting-up.html).
-
-2. **Install Helm:** Helm is a Kubernetes package manager. Install Helm by following the instructions provided [here](https://helm.sh/docs/intro/install/).
-
-3. **Python:** Ensure that Python is installed on your system. You can download it from the [official Python website](https://www.python.org/downloads/).
-
-4. **AWS CLI:** Install the AWS Command Line Interface (CLI) following the official [installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
-
-5. **Install kubectl:** Install the latest stable version of `kubectl` on your system. You can find installation instructions [here](https://kubernetes.io/docs/tasks/tools/).
-
-6. **Databases:** Set up PostgreSQL and MongoDB for your application.
 
 ### High Level Flow of Application Deployment
 
@@ -57,158 +62,132 @@ Follow these steps to deploy your microservice application:
 
 #### Cluster Creation
 
-1. **Log in to AWS Console:**
-   - Access the AWS Management Console with your AWS account credentials.
-
-2. **Create eksCluster IAM Role**
-   - Follow the steps mentioned in [this](https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html) documentation using root user
-   - After creating it will look like this:
-
-   <p align="center">
-  <img src="./Project documentation/ekscluster_role.png" width="600" title="ekscluster_role" alt="ekscluster_role">
-  </p>
-
-   - Please attach `AmazonEKS_CNI_Policy` explicitly if it is not attached by default
-
-3. **Create Node Role - AmazonEKSNodeRole**
-   - Follow the steps mentioned in [this](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html#create-worker-node-role) documentation using root user
-   - Please note that you do NOT need to configure any VPC CNI policy mentioned after step 5.e under Creating the Amazon EKS node IAM role
-   - Simply attach the following policies to your role once you have created `AmazonEKS_CNI_Policy` , `AmazonEBSCSIDriverPolicy` , `AmazonEC2ContainerRegistryReadOnly`
-     incase it is not attached by default
-   - Your AmazonEKSNodeRole will look like this: 
-
-<p align="center">
-  <img src="./Project documentation/node_iam.png" width="600" title="Node_IAM" alt="Node_IAM">
-  </p>
-
-4. **Open EKS Dashboard:**
-   - Navigate to the Amazon EKS service from the AWS Console dashboard.
-
-5. **Create EKS Cluster:**
-   - Click "Create cluster."
-   - Choose a name for your cluster.
-   - Configure networking settings (VPC, subnets).
-   - Choose the `eksCluster` IAM role that was created above
-   - Review and create the cluster.
-
-6. **Cluster Creation:**
-   - Wait for the cluster to provision, which may take several minutes.
-
-7. **Cluster Ready:**
-   - Once the cluster status shows as "Active," you can now create node groups.
-
-#### Node Group Creation
-
-1. In the "Compute" section, click on "Add node group."
-
-2. Choose the AMI (default), instance type (e.g., t3.medium), and the number of nodes (attach a screenshot here).
-
-3. Click "Create node group."
-
-#### Adding inbound rules in Security Group of Nodes
-
-**NOTE:** Ensure that all the necessary ports are open in the node security group.
-
-<p align="center">
-  <img src="./Project documentation/inbound_rules_sg.png" width="600" title="Inbound_rules_sg" alt="Inbound_rules_sg">
-  </p>
-
-#### Enable EBS CSI Addon
-1. enable addon `ebs csi` this is for enabling pvcs once cluster is created
-
-<p align="center">
-  <img src="./Project documentation/ebs_addon.png" width="600" title="ebs_addon" alt="ebs_addon">
-  </p>
-
-#### Deploying your application on EKS Cluster
-
-1. Clone the code from this repository.
-
-2. Set the cluster context:
-   ```
-   aws eks update-kubeconfig --name <cluster_name> --region <aws_region>
-   ```
-
-### Commands
 
 Here are some essential Kubernetes commands for managing your deployment:
 
 
-### MongoDB
+### 
 
-To install MongoDB, set the database username and password in `values.yaml`, then navigate to the MongoDB Helm chart folder and run:
+# 🎧 Microservices Video-to-Audio Converter (Kubernetes + Helm + RabbitMQ + MongoDB + PostgreSQL)
 
-```
-cd Helm_charts/MongoDB
-helm install mongo .
-```
+This project demonstrates a complete microservices system that converts uploaded videos into MP3 audio using a cloud-native stack. It is fully containerized and deployed using **Kubernetes**, **Helm**, and **Kind**, with services communicating over **RabbitMQ** and persisting data in **MongoDB** and **PostgreSQL**.
 
-Connect to the MongoDB instance using:
+---
 
-```
-mongosh mongodb://<username>:<pwd>@<nodeip>:30005/mp3s?authSource=admin
-```
+## 🚀 Quickstart in 4 Commands
 
-### PostgreSQL
+> This setup uses [Taskfile](https://taskfile.dev/) for orchestration. You only need 4 commands to get everything running!
 
-Set the database username and password in `values.yaml`. Install PostgreSQL from the PostgreSQL Helm chart folder and initialize it with the queries in `init.sql`. For PowerShell users:
+### 🔧 Prerequisites
 
-```
-cd ..
-cd Postgres
-helm install postgres .
-```
+Make sure you have the following installed:
 
-Connect to the Postgres database and copy all the queries from the "init.sql" file.
-```
-psql 'postgres://<username>:<pwd>@<nodeip>:30003/authdb'
-```
+- [Docker](https://www.docker.com/)
+- [Kind](https://kind.sigs.k8s.io/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Helm](https://helm.sh/)
+- [Taskfile (Task)](https://taskfile.dev/)
+- [jq](https://stedolan.github.io/jq/) (for parsing JSON in shell)
+- `curl`
 
-### RabbitMQ
+---
 
-Deploy RabbitMQ by running:
+### 🧪 Start the System
 
-```
-helm install rabbitmq .
-```
+```bash
+# 1️⃣ Create Kubernetes cluster with Kind
+cd kind-installation-and-setup/
+task kind:01-create-cluster
 
-Ensure you have created two queues in RabbitMQ named `mp3` and `video`. To create queues, visit `<nodeIp>:30004>` and use default username `guest` and password `guest`
+# 2️⃣ Install Helm charts (PostgreSQL, MongoDB, RabbitMQ + wait and queues)
+cd ../Helm_charts/
+task helm:install-all
 
-**NOTE:** Ensure that all the necessary ports are open in the node security group.
+# 3️⃣ Deploy microservices (Auth, Gateway, Notification, Converter, etc.)
+cd ../src/
+task svc:install-all
 
-### Apply the manifest file for each microservice:
+# 4️⃣ Test full API flow (login → upload video → download MP3)
+task api:test-all
 
-- **Auth Service:**
-  ```
-  cd auth-service/manifest
-  kubectl apply -f .
-  ```
 
-- **Gateway Service:**
-  ```
-  cd gateway-service/manifest
-  kubectl apply -f .
-  ```
+API Gateway: Handles all client requests (login, upload, download)
 
-- **Converter Service:**
-  ```
-  cd converter-service/manifest
-  kubectl apply -f .
-  ```
+Auth Service: Authenticates and returns JWT tokens
 
-- **Notification Service:**
-  ```
-  cd notification-service/manifest
-  kubectl apply -f .
-  ```
+Converter: Reads from RabbitMQ "video" queue, processes MP4s → MP3
 
-### Application Validation
+Notification: Listens to "mp3" queue, sends email with download ID
 
-After deploying the microservices, verify the status of all components by running:
+MongoDB: Stores video and audio files
 
-```
-kubectl get all
-```
+PostgreSQL: Stores user credentials and login sessions
+
+RabbitMQ: Manages messaging queues
+
+📂 Directory Structure
+.
+├── kind-installation-and-setup/     # Kind cluster configuration
+│   └── kind-config.yaml
+│   └── Taskfile.yml                 # kind:01-create-cluster
+│
+├── Helm_charts/                     # Helm chart deployment
+│   ├── Postgres/
+│   ├── MongoDB/
+│   ├── RabbitMQ/
+│   └── Taskfile.yml                 # helm:install-all
+│
+├── src/                             # Source code and Kubernetes manifests
+│   ├── gateway/
+│   ├── auth/
+│   ├── converter/
+│   ├── notification/
+│   ├── assets/                      # Uploaded MP4s and output MP3s
+│   ├── Taskfile.yml                 # svc:install-all, api:test-all
+│   └── .env                         # Configuration variables
+
+
+
+🔑 API Endpoints
+🔐 Login
+POST http://localhost:30002/login
+Authorization: Basic <email>:<password>
+
+Response: JWT token
+
+
+⬆️ Upload Video
+POST http://localhost:30002/upload
+Headers:
+  Authorization: Bearer <JWT Token>
+Form:
+  file=@video.mp4
+
+⬇️ Download Audio
+GET http://localhost:30002/download?fid=<file_id>
+Headers:
+  Authorization: Bearer <JWT Token>
+📨 Your email (used at login) will receive the MP3 file ID once ready.
+
+🧪 Example Task Usage
+task api:login      # Logs in and stores JWT in .jwt_token
+task api:upload     # Uploads video.mp4 from ./assets
+task api:download -- FILE_ID=<your_id>  # Downloads video.mp3 to ./assets
+
+📋 Notes
+JWT token is stored in .jwt_token after login
+
+RabbitMQ queues (video, mp3) are auto-created by Taskfile after RabbitMQ chart is installed
+
+MongoDB uses GridFS to store large binary files like video/audio
+
+Emails are simulated in the logs (you can later plug in a real SMTP)
+
+
+To install Charts, set the vars in `values.yaml`
+
+
+
 
 ### Notification Configuration
 
@@ -267,8 +246,24 @@ Run the application through the following API calls:
 
 ## Destroying the Infrastructure
 
-To clean up the infrastructure, follow these steps:
+cd kind-installation-and-setup
+t kind:04
 
-1. **Delete the Node Group:** Delete the node group associated with your EKS cluster.
 
-2. **Delete the EKS Cluster:** Once the nodes are deleted, you can proceed to delete the EKS cluster itself.
+# 🎧 Microservices Video-to-Audio Converter
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](#)
+[![Kind](https://img.shields.io/badge/k8s-kind-blue?style=flat-square&logo=kubernetes)](#)
+[![Helm](https://img.shields.io/badge/helm-ready-0f6ab4?style=flat-square&logo=helm)](#)
+[![Taskfile](https://img.shields.io/badge/taskfile-powered-239120?style=flat-square&logo=task)](https://taskfile.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker)](#)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-ready-ff6600?style=flat-square&logo=rabbitmq)](#)
+[![MongoDB](https://img.shields.io/badge/MongoDB-ready-47A248?style=flat-square&logo=mongodb)](#)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-ready-336791?style=flat-square&logo=postgresql)](#)
+[![API Ready](https://img.shields.io/badge/API-Tested-green?style=flat-square)](#)
+
+
+📮 Contact
+Built by Rabie | [GitHub](https://github.com/rabie01)
+For questions or contributions, feel free to open an issue or pull request.

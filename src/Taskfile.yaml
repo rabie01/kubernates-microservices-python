@@ -1,0 +1,137 @@
+version: "3.2"
+
+dotenv: ['../.env']
+vars:
+  FILE_ID: "687099e8ba7fa3c083ba0f11"
+tasks:
+  svc:install-all:
+    desc: Install all the services
+    deps:
+      - svc:install-auth
+      - svc:install-converter
+      - svc:install-gateway
+      - svc:install-notification
+
+  svc:install-auth:
+    desc: Install authentication service
+    cmds:
+      - echo "🚀 Deploying auth service..."
+      - docker build -t $DOCKER_REPO/auth:latest -f ./auth-service/Dockerfile ./auth-service
+      # - docker login
+      # - docker push $DOCKER_REPO/auth:latest
+      - kind load docker-image $DOCKER_REPO/auth:latest
+      - kubectl apply -f ./auth-service/manifest/. -n $NAMESPACE
+
+  svc:install-converter:
+    desc: Install converter service
+    cmds:
+      - echo "🚀 Deploying converter service..."
+      - docker build -t $DOCKER_REPO/converter:latest -f ./converter-service/Dockerfile ./converter-service
+      # - docker login
+      # - docker push $DOCKER_REPO/converter:latest
+      - kind load docker-image $DOCKER_REPO/converter:latest
+      - kubectl apply -f ./converter-service/manifest/. -n $NAMESPACE
+
+  svc:install-gateway:
+    desc: Install gateway service
+    cmds:
+      - echo "🚀 Deploying gateway service..."
+      - docker build -t $DOCKER_REPO/gateway:latest -f ./gateway-service/Dockerfile ./gateway-service
+      # - docker login
+      # - docker push $DOCKER_REPO/gateway:latest
+      - kind load docker-image $DOCKER_REPO/gateway:latest
+      - kubectl apply -f ./gateway-service/manifest/. -n $NAMESPACE
+
+  svc:install-notification:
+    desc: Install notification service
+    cmds:
+      - echo "🚀 Deploying notification service..."
+      - docker build -t $DOCKER_REPO/notification:latest -f ./notification-service/Dockerfile ./notification-service
+      # - docker login
+      # - docker push $DOCKER_REPO/notification:latest
+      - kind load docker-image $DOCKER_REPO/notification:latest
+      - kubectl apply -f ./notification-service/manifest/. -n $NAMESPACE
+
+
+  api:login:
+    desc: "Login and get JWT token"
+    cmds:
+      - |
+        echo $API_HOST
+        echo "🔐 Logging in to get JWT token..."
+        # set -x  # Enable bash debug output
+        TOKEN=$(curl -s -X POST http://$API_HOST:$API_PORT/login -u $LOGIN_EMAIL:$LOGIN_PASS)
+        if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+          echo "❌ Failed to get JWT token."
+          exit 1
+        fi
+        echo "✅ JWT token obtained."
+        echo "$TOKEN" > .jwt_token
+
+  api:upload:
+    desc: "Upload a video file using JWT token"
+    deps: [api:login]
+    cmds:
+      - |
+        set -x
+        echo "📤 Uploading video.mp4..."
+        TOKEN=$(cat .jwt_token)
+        curl -X POST -F 'file=@../assets/video.mp4' \
+          -H "Authorization: Bearer $TOKEN" \
+          http://$API_HOST:$API_PORT/upload
+
+  api:download:
+    desc: "Download audio file by file ID. Usage: task api:download -- FILE_ID=<your_id>"
+    deps: [api:login]
+    # make sure u update FILE_ID at the very top 
+    # vars:
+    #   FILE_ID: ""
+    cmds:
+      - |
+        if [ -z "{{.FILE_ID}}" ]; then
+          echo "❗ FILE_ID is required. Use: task api:download -- FILE_ID=abc123"
+          exit 1
+        fi
+        echo "📥 Downloading audio for file ID {{.FILE_ID}}..."
+        TOKEN=$(cat .jwt_token)
+        curl --output ../assets/video.mp3 -X GET \
+          -H "Authorization: Bearer $TOKEN" \
+          "http://$API_HOST:$API_PORT/download?fid={{.FILE_ID}}"
+
+
+  api:test-all:
+    desc: "Test full API flow: login, upload, download"
+    # make sure u update FILE_ID at the very top
+    # vars:
+    #   FILE_ID: "68708ec19ef5a77469437ce6"
+    cmds:
+      - task: api:login
+      - task: api:upload
+      - |
+        if [ -z "{{.FILE_ID}}" ]; then
+          echo "⚠️ Skipping download: FILE_ID not provided."
+        else
+          task api:download -- FILE_ID={{.FILE_ID}}
+        fi
+
+
+
+
+
+
+  debug-cmds:
+    desc: list images avail in specific k8 node
+    cmds:
+      - docker exec -it kind-control-plane crictl images ls
+      - kubectl cluster-info dump
+      - kubectl logs podname
+      - kubectl describe podname
+      - kubectl get events
+
+svc:uninstall-all:
+  desc: Delete all service resources
+  cmds:
+    - kubectl delete -f ./auth-service/manifest/. -n $NAMESPACE || true
+    - kubectl delete -f ./converter-service/manifest/. -n $NAMESPACE || true
+    - kubectl delete -f ./gateway-service/manifest/. -n $NAMESPACE || true
+    - kubectl delete -f ./notification-service/manifest/. -n $NAMESPACE || true

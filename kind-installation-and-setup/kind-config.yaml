@@ -1,0 +1,25 @@
+# 4 node (3 workers) cluster config images pulled auto from https://hub.docker.com/r/kindest/node
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30003   # db service port inside node container
+        hostPort: 30003       # exposed on localhost:30003
+        protocol: TCP
+      - containerPort: 30002   # gateway service port inside node container
+        hostPort: 30002       # exposed on localhost:30002
+        protocol: TCP
+      - containerPort: 30005   # mongodb service port inside node container
+        hostPort: 30005       # exposed on localhost:30005
+        protocol: TCP
+      - containerPort: 30004   # rabbitmq management UI port
+        hostPort: 30004
+        protocol: TCP
+      # - containerPort: 31804   # rabbitmq amqp port
+      #   hostPort: 31804
+      #   protocol: TCP
+  - role: worker
+  - role: worker
+  - role: worker
+

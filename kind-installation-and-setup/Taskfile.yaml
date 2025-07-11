@@ -1,29 +1,37 @@
-version: "3"
+version: "3.2"
 
-env:
-  # Set default gum style options
-  BORDER: double
-  BORDER_FOREGROUND: "212"
-  PADDING: "1 1"
-  MARGIN: "1 1"
+dotenv: ['../.env']
 
 tasks:
-  kind:01-generate-config:
-    cmds:
-      - REPLACE_WITH_ABSOLUTE_PATH=${PWD} envsubst < kind-config.yaml.TEMPLATE > kind-config.yaml
-    desc: "Generate kind config with local absolute paths for PV mounts"
-
-  kind:02-create-cluster:
+  kind:01-create-cluster:
+    desc: Create a Kubernetes cluster using kind
     cmds:
       - kind create cluster --config kind-config.yaml
-    desc: Create a Kubernetes cluster using kind
+    
 
-  kind:03-run-cloud-provider-kind:
-    desc: "Run sigs.k8s.io/cloud-provider-kind@latest to enable load balancer services with KinD"
+  kind:02-create-namespace:
+    desc: "create k8 name space in the cluster"
     cmds:
-      - sudo cloud-provider-kind
+      - kubectl create namespace $NAMESPACE
+      - kubens $NAMESPACE
+
+  kind:03-delete-namespace:
+    desc: "delete all the resources by deleting the name space"
+    cmds:
+      - kubectl delete ns $NAMESPACE
 
   kind:04-delete-cluster:
+    desc: "Delete a kind Kubernetes cluster"
     cmds:
       - kind delete cluster
-    desc: Delete and existing a kind Kubernetes cluster
+
+  delete-docker-images:
+    desc: "Delete the docker images for cleaning"
+    cmds:
+      - docker rmi $DOCKER_REPO/gateway $DOCKER_REPO/auth $DOCKER_REPO/notification $DOCKER_REPO/converter || true
+  
+  default:
+    desc: "default task placeholder"
+    cmds:
+      - task -a
+    
