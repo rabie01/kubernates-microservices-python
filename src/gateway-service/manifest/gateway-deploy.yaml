@@ -20,7 +20,7 @@ spec:
       containers:
         - name: gateway
           image: rabeea2100/gateway
-          imagePullPolicy: Never
+          # imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: gateway-configmap
