@@ -17,9 +17,9 @@ tasks:
     cmds:
       - echo "🚀 Deploying auth service..."
       - docker build -t $DOCKER_REPO/auth:latest -f ./auth-service/Dockerfile ./auth-service
-      # - docker login
-      # - docker push $DOCKER_REPO/auth:latest
-      - kind load docker-image $DOCKER_REPO/auth:latest
+      - docker login
+      - docker push $DOCKER_REPO/auth:latest
+      # - kind load docker-image $DOCKER_REPO/auth:latest
       - kubectl apply -f ./auth-service/manifest/. -n $NAMESPACE
 
   svc:install-converter:
@@ -27,9 +27,9 @@ tasks:
     cmds:
       - echo "🚀 Deploying converter service..."
       - docker build -t $DOCKER_REPO/converter:latest -f ./converter-service/Dockerfile ./converter-service
-      # - docker login
-      # - docker push $DOCKER_REPO/converter:latest
-      - kind load docker-image $DOCKER_REPO/converter:latest
+      - docker login
+      - docker push $DOCKER_REPO/converter:latest
+      # - kind load docker-image $DOCKER_REPO/converter:latest
       - kubectl apply -f ./converter-service/manifest/. -n $NAMESPACE
 
   svc:install-gateway:
@@ -37,9 +37,9 @@ tasks:
     cmds:
       - echo "🚀 Deploying gateway service..."
       - docker build -t $DOCKER_REPO/gateway:latest -f ./gateway-service/Dockerfile ./gateway-service
-      # - docker login
-      # - docker push $DOCKER_REPO/gateway:latest
-      - kind load docker-image $DOCKER_REPO/gateway:latest
+      - docker login
+      - docker push $DOCKER_REPO/gateway:latest
+      # - kind load docker-image $DOCKER_REPO/gateway:latest
       - kubectl apply -f ./gateway-service/manifest/. -n $NAMESPACE
 
   svc:install-notification:
@@ -47,9 +47,9 @@ tasks:
     cmds:
       - echo "🚀 Deploying notification service..."
       - docker build -t $DOCKER_REPO/notification:latest -f ./notification-service/Dockerfile ./notification-service
-      # - docker login
-      # - docker push $DOCKER_REPO/notification:latest
-      - kind load docker-image $DOCKER_REPO/notification:latest
+      - docker login
+      - docker push $DOCKER_REPO/notification:latest
+      # - kind load docker-image $DOCKER_REPO/notification:latest
       - kubectl apply -f ./notification-service/manifest/. -n $NAMESPACE
 
 
@@ -120,13 +120,15 @@ tasks:
 
 
   debug-cmds:
-    desc: list images avail in specific k8 node
+    desc: common debugging commands
     cmds:
-      - docker exec -it kind-control-plane crictl images ls
+      - docker exec -it kind-control-plane crictl images ls  #list images locally available in a k8 node
       - kubectl cluster-info dump
-      - kubectl logs podname
-      - kubectl describe podname
-      - kubectl get events
+      - kubectl logs podname -n <namespace>
+      - kubectl describe pod <podname> -n <namespace>
+      - kubectl get events -n <namespace>
+      - kubectl get pods -n <namespace>
+      - kubectl get svc -n <namespace>
 
 svc:uninstall-all:
   desc: Delete all service resources
