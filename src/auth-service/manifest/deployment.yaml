@@ -21,7 +21,7 @@ spec:
       containers:
         - name: auth
           image: rabeea2100/auth
-          imagePullPolicy: Never
+          # imagePullPolicy: Never
           ports:
             - containerPort: 5000
           envFrom:
