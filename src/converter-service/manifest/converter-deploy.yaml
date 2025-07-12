@@ -21,7 +21,7 @@ spec:
       containers:
         - name: converter
           image: rabeea2100/converter
-          imagePullPolicy: Never
+          # imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: converter-configmap
