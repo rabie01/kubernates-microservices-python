@@ -21,7 +21,7 @@ spec:
       containers:
         - name: notification
           image: rabeea2100/notification
-          imagePullPolicy: Never
+          # imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: notification-configmap
