@@ -12,6 +12,8 @@
     "kind@latest",
     "kubectl@latest",
     "kubectx@latest",
+    "stern",
+    "kubetail",
     "kubernetes-helm@latest",
     "poetry@latest",
     "python312@latest",

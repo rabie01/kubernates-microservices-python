@@ -8,4 +8,4 @@ COPY ./requirements.txt /app
 RUN pip install --no-cache-dir --requirement /app/requirements.txt
 COPY . /app
 
-CMD ["python", "consumer.py"]
+CMD ["python", "-u","consumer.py"]

@@ -1,8 +1,6 @@
 version: "3.2"
 
 dotenv: ['../.env']
-vars:
-  FILE_ID: "687099e8ba7fa3c083ba0f11"
 tasks:
   svc:install-all:
     desc: Install all the services
@@ -78,17 +76,16 @@ tasks:
         TOKEN=$(cat .jwt_token)
         curl -X POST -F 'file=@../assets/video.mp4' \
           -H "Authorization: Bearer $TOKEN" \
-          http://$API_HOST:$API_PORT/upload
+          http://$API_HOST:$API_PORT/upload | tee fid.txt
 
   api:download:
     desc: "Download audio file by file ID. Usage: task api:download -- FILE_ID=<your_id>"
     deps: [api:login]
-    # make sure u update FILE_ID at the very top 
-    # vars:
-    #   FILE_ID: ""
     cmds:
       - |
-        if [ -z "{{.FILE_ID}}" ]; then
+        #set -x
+        FILE_ID=$(jq -r .mp3_fid fid.txt)
+        if [ -z $FILE_ID ]; then
           echo "❗ FILE_ID is required. Use: task api:download -- FILE_ID=abc123"
           exit 1
         fi
@@ -96,22 +93,20 @@ tasks:
         TOKEN=$(cat .jwt_token)
         curl --output ../assets/video.mp3 -X GET \
           -H "Authorization: Bearer $TOKEN" \
-          "http://$API_HOST:$API_PORT/download?fid={{.FILE_ID}}"
+          "http://$API_HOST:$API_PORT/download?fid=$FILE_ID"
 
 
   api:test-all:
     desc: "Test full API flow: login, upload, download"
-    # make sure u update FILE_ID at the very top
-    # vars:
-    #   FILE_ID: "68708ec19ef5a77469437ce6"
     cmds:
       - task: api:login
       - task: api:upload
       - |
-        if [ -z "{{.FILE_ID}}" ]; then
+        FILE_ID=$(jq -r .mp3_fid fid.txt)
+        if [ -z $FILE_ID ]; then
           echo "⚠️ Skipping download: FILE_ID not provided."
         else
-          task api:download -- FILE_ID={{.FILE_ID}}
+          task api:download -- FILE_ID=$FILE_ID
         fi
 
 
@@ -129,6 +124,13 @@ tasks:
       - kubectl get events -n <namespace>
       - kubectl get pods -n <namespace>
       - kubectl get svc -n <namespace>
+      - kubectl get deployments --show-labels
+      - kubectl rollout restart deploy <deploy>
+      - k logs --selector=app=gateway
+      - kubens <namespace>
+      - kubetail <appname> #partial or full match of the pod name to get logs from multiple pods
+      - stern <appname>  #partial or full match of the pod name to get logs from multiple pods
+
 
 svc:uninstall-all:
   desc: Delete all service resources
