@@ -23,7 +23,11 @@ This project demonstrates a complete **microservices-based video-to-audio conver
 - Taskfile for automation
 - Python microservices
 
-The system converts uploaded MP4 videos into MP3 audio and emails the result using a decoupled architecture with queues.
+The system converts uploaded MP4 videos into MP3 audio and emails the result using a decoupled architecture with queues.  
+### Feature: feature/return-mp3-fid-on-upload. Temp Queue for Returning MP3 File ID on Upload
+
+
+This branch introduces a temporary reply queue mechanism that allows the upload endpoint to immediately return the generated MP3 file ID (mp3-fid). This streamlines the workflow by making the mp3-fid readily available for use with the download endpoint.
 
 ---
 
