@@ -90,28 +90,16 @@ spec:
                 }
             }
         }
-        stage('Wait for Postgres') {
+        stage('Wait for Postgres Ready') {
             steps {
-                container('psql') {
-                    sh '''
-                    set +e
-                    echo "Testing DNS and connectivity:"
-                    getent hosts $PSQL_HOST || (echo "❌ DNS failed"; exit 1)
-                    nc -vz $PSQL_HOST $PSQL_PORT || echo "nc failed (but may require busybox or netcat installed)"
-                    echo "PG_HOST=$PSQL_HOST, PG_PORT=$PSQL_PORT, PG_USER=$PSQL_USER"
-                    for i in {1..20}; do
-                      if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d authdb; then
-                        echo "✅ PostgreSQL is ready!"
-                        exit 0
-                      fi
-                      echo "Waiting for PostgreSQL..."
-                      sleep 5
-                    done
-                    echo "❌ PostgreSQL did not become ready in time."
-                    exit 1
-                    '''
-                }
+                container('kubectl') {
+                   sh '''
+                # Wait up to 180 seconds for any pod with label app=postgres in namespace jenkins to become ready
+                set -ex
+                kubectl wait --for=condition=Ready pod -l app=auth-app -n jenkins --timeout=180s
+              '''
             }
+          }
         }
         stage('Postgres Init SQL') {
             steps {
@@ -120,23 +108,16 @@ spec:
                 }
             }
         }
-        stage('Wait for RabbitMQ') {
-            steps {
-                container('curl') {
-                    sh '''
-                    for i in {1..20}; do
-                      if curl -u $RMQ_USER:$RMQ_PASS -s http://$RMQ_HOST:$RMQ_PORT/api/overview > /dev/null; then
-                        echo "✅ RabbitMQ is ready!"
-                        exit 0
-                      fi
-                      echo "Waiting for RabbitMQ..."
-                      sleep 5
-                    done
-                    echo "❌ RabbitMQ not ready"
-                    exit 1
-                    '''
-                }
+        stage('Wait for RabbitMQ Ready') {
+          steps {
+            container('kubectl') {
+              sh '''
+                # Wait up to 180s for a pod with label app=rabbitmq in namespace jenkins to be ready
+                set -ex
+                kubectl wait --for=condition=Ready pod -l app=rabbitmq -n jenkins --timeout=180s
+              '''
             }
+          }
         }
         stage('RabbitMQ Create Queues') {
             steps {
