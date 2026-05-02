@@ -23,6 +23,8 @@
   "shell": {
     "init_hook": [
       "alias k=kubectl",
+      "source <(kubectl completion bash)",
+      "complete -o default -F __start_kubectl k",
       "source <(task --completion bash)",
       "alias t=task",
       "complete -F _task t",
