@@ -71,7 +71,7 @@ tasks:
     deps: [api:login]
     cmds:
       - |
-        set -x
+        # set -x
         echo "📤 Uploading video.mp4..."
         TOKEN=$(cat .jwt_token)
         curl -X POST -F 'file=@../assets/video.mp4' \
@@ -91,7 +91,7 @@ tasks:
         fi
         echo "📥 Downloading audio for file ID {{.FILE_ID}}..."
         TOKEN=$(cat .jwt_token)
-        curl --output ../assets/video.mp3 -X GET \
+        curl --output ../assets/audio.mp3 -X GET \
           -H "Authorization: Bearer $TOKEN" \
           "http://$API_HOST:$API_PORT/download?fid=$FILE_ID"
 
@@ -117,25 +117,25 @@ tasks:
   debug-cmds:
     desc: common debugging commands
     cmds:
-      - docker exec -it kind-control-plane crictl images ls  #list images locally available in a k8 node
-      - kubectl cluster-info dump
-      - kubectl logs podname -n <namespace>
-      - kubectl describe pod <podname> -n <namespace>
-      - kubectl get events -n <namespace>
-      - kubectl get pods -n <namespace>
-      - kubectl get svc -n <namespace>
-      - kubectl get deployments --show-labels
-      - kubectl rollout restart deploy <deploy>
-      - k logs --selector=app=gateway
-      - kubens <namespace>
-      - kubetail <appname> #partial or full match of the pod name to get logs from multiple pods
-      - stern <appname>  #partial or full match of the pod name to get logs from multiple pods
+      - echo "docker exec -it kind-control-plane crictl images ls"  #list images locally available in a k8 node
+      - echo "kubectl cluster-info dump"
+      - echo "kubectl logs podname -n <namespace>"
+      - echo "kubectl describe pod <podname> -n <namespace>"
+      - echo "kubectl get events -n <namespace>"
+      - echo "kubectl get pods -n <namespace>"
+      - echo "kubectl get svc -n <namespace>"
+      - echo "kubectl get deployments --show-labels"
+      - echo "kubectl rollout restart deploy <deploy>"
+      - echo "k logs --selector=app=gateway"
+      - echo "kubens <namespace>"
+      - echo "kubetail <appname>" #partial or full match of the pod name to get logs from multiple pods
+      - echo "stern <appname>"  #partial or full match of the pod name to get logs from multiple pods
 
 
-svc:uninstall-all:
-  desc: Delete all service resources
-  cmds:
-    - kubectl delete -f ./auth-service/manifest/. -n $NAMESPACE || true
-    - kubectl delete -f ./converter-service/manifest/. -n $NAMESPACE || true
-    - kubectl delete -f ./gateway-service/manifest/. -n $NAMESPACE || true
-    - kubectl delete -f ./notification-service/manifest/. -n $NAMESPACE || true
+  svc:uninstall-all:
+    desc: Delete all service resources
+    cmds:
+      - kubectl delete -f ./auth-service/manifest/. -n $NAMESPACE || true
+      - kubectl delete -f ./converter-service/manifest/. -n $NAMESPACE || true
+      - kubectl delete -f ./gateway-service/manifest/. -n $NAMESPACE || true
+      - kubectl delete -f ./notification-service/manifest/. -n $NAMESPACE || true

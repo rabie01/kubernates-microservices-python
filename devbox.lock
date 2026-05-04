@@ -665,6 +665,10 @@
         }
       }
     },
+    "kubetail": {
+      "resolved": "github:NixOS/nixpkgs/9b008d60392981ad674e04016d25619281550a9d?narHash=sha256-mgFxAPLWw0Kq%2BC8P3dRrZrOYEQXOtKuYVlo9xvPntt8%3D#kubetail",
+      "source": "nixpkg"
+    },
     "mongosh@latest": {
       "last_modified": "2025-07-07T01:36:15Z",
       "resolved": "github:NixOS/nixpkgs/2defa37146df235ef62f566cde69930a86f14df1#mongosh",
@@ -1023,6 +1027,10 @@
           "store_path": "/nix/store/89laaz8x9pdydxzz74p0vd8vdj0szqbq-python3-3.12.11"
         }
       }
+    },
+    "stern": {
+      "resolved": "github:NixOS/nixpkgs/9b008d60392981ad674e04016d25619281550a9d?narHash=sha256-mgFxAPLWw0Kq%2BC8P3dRrZrOYEQXOtKuYVlo9xvPntt8%3D#stern",
+      "source": "nixpkg"
     },
     "yq-go@latest": {
       "last_modified": "2025-06-20T02:24:11Z",

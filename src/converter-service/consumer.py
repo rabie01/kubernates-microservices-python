@@ -2,8 +2,18 @@ import pika, sys, os, time
 from pymongo import MongoClient
 import gridfs
 from convert import to_mp3
+import threading
+from health_server import app # Import your flask app
+
+def run_health_server():
+    app.run(host='0.0.0.0', port=8000)
 
 def main():
+
+    # Start health server in a background thread
+    t = threading.Thread(target=run_health_server, daemon=True)
+    t.start()
+
     client = MongoClient(os.environ.get('MONGODB_URI'))
     db_videos = client.videos
     db_mp3s = client.mp3s
@@ -11,10 +21,25 @@ def main():
     fs_videos = gridfs.GridFS(db_videos)
     fs_mp3s = gridfs.GridFS(db_mp3s)
 
-    # rabbitmq connection
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='rabbitmq',heartbeat=0)
-    )
+    # # rabbitmq connection
+    # connection = pika.BlockingConnection(
+    #     pika.ConnectionParameters(host='rabbitmq',heartbeat=0)
+    # )
+
+    # Robust RabbitMQ connection loop
+    connection = None
+    while True:
+        try:
+            print("Attempting to connect to RabbitMQ...")
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(host='rabbitmq', heartbeat=0)
+            )
+            print("✅ Connected to RabbitMQ")
+            break # Exit loop once connected
+        except pika.exceptions.AMQPConnectionError:
+            print("❌ RabbitMQ connection failed. Retrying in 5 seconds...")
+            time.sleep(5)
+
     channel = connection.channel()
 
     def callback(ch, method, properties, body):

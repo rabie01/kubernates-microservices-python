@@ -1,0 +1,25 @@
+version: '3.2'
+# if you want to use this file, you must comment dotenv line in all other taskfiles
+dotenv: ['.env']
+
+includes:
+  # 'dir' ensures the tasks run in the correct context
+  k8s:
+    taskfile: ./kind-installation-and-setup/Taskfile.yaml
+    dir: ./kind-installation-and-setup
+  helm:
+    taskfile: ./Helm_charts/Taskfile.yaml
+    dir: ./Helm_charts
+  src:
+    taskfile: ./src/Taskfile.yaml
+    dir: ./src
+
+tasks:
+  # Orchestration task to run everything in order
+  setup-and-test:
+    desc: "Run full cluster setup, helm install, service install, and api tests"
+    cmds:
+      - task: k8s:kind:01-create-cluster
+      - task: helm:helm:install-all
+      - task: src:svc:install-all
+      - task: src:api:test-all
