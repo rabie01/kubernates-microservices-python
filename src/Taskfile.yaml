@@ -55,16 +55,18 @@ tasks:
     desc: "Login and get JWT token"
     cmds:
       - |
-        echo $API_HOST
-        echo "🔐 Logging in to get JWT token..."
-        # set -x  # Enable bash debug output
-        TOKEN=$(curl -s -X POST http://$API_HOST:$API_PORT/login -u $LOGIN_EMAIL:$LOGIN_PASS)
-        if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-          echo "❌ Failed to get JWT token."
+        echo "🔐 Logging in..."
+        # Use -w to get the status code and -o to save the body
+        HTTP_RESPONSE=$(curl -s -w "%{http_code}" -o .temp_body.txt -X POST http://$API_HOST:$API_PORT/login -u $LOGIN_EMAIL:$LOGIN_PASS)
+        
+        if [ "$HTTP_RESPONSE" -ne 200 ]; then
+          echo "❌ Login failed with status: $HTTP_RESPONSE"
+          cat .temp_body.txt # Show the error
           exit 1
         fi
+
+        mv .temp_body.txt .jwt_token
         echo "✅ JWT token obtained."
-        echo "$TOKEN" > .jwt_token
 
   api:upload:
     desc: "Upload a video file using JWT token"
@@ -130,6 +132,16 @@ tasks:
       - echo "kubens <namespace>"
       - echo "kubetail <appname>" #partial or full match of the pod name to get logs from multiple pods
       - echo "stern <appname>"  #partial or full match of the pod name to get logs from multiple pods
+      - echo "kubectl port-forward svc/<service-name> <local-port>:<remote-port> -n <namespace>" #port forward to access a service locally
+      - echo "kubectl top pods -n <namespace>" #check resource usage of pods
+      - echo "kubectl top nodes" #check resource usage of nodes
+      - echo "kubectl get ingress -n <namespace>" #check ingress resources
+      - echo 'kubectl exec -it postgres-deploy-55b4bfdc7-6sfr5 -- psql -U rabie -d authdb -c "SELECT * FROM auth_user;"' #exec into postgres pod and run a query
+      - echo 'kubectl exec postgres-deploy-55b4bfdc7-6sfr5 -- psql -U rabie -d authdb -c "SELECT count(*) FROM pg_stat_activity;"' #check number of active connections to postgres"
+      - echo "kubectl debug -it <pod-name> -n <namespace> --image=busybox -- sh" #debug into a pod with a busybox container
+      - echo "kubectl debug node/<node-name> -it --image=busybox -- chroot /host sh" #debug into a node with a busybox container and chroot to the host filesystem
+      - echo "kubectl debug -it <pod-name> -n <namespace> --image=busybox --target=container-name -- sh" #debug into a specific container in a pod 
+
 
 
   svc:uninstall-all:

@@ -25,7 +25,7 @@ tasks:
       - |
         echo "⏳ Waiting for PostgreSQL to become available..."
         for i in {1..10}; do
-          if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d authdb; then
+          if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d $PSQL_DB_name; then
             echo "✅ PostgreSQL is ready!"
             exit 0
           fi
@@ -40,8 +40,8 @@ tasks:
     deps: [postgres:wait]
     cmds:
       - echo "📦 Applying init.sql to PostgreSQL..."
-      - PGPASSWORD=$PSQL_PASS psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d authdb -f ./Postgres/init.sql
-      # - psql "postgres://$PSQL_USER:$PSQL_PASS@$PSQL_HOST:$PSQL_PORT/authdb" -f ./Postgres/init.sql
+      - PGPASSWORD=$PSQL_PASS psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d $PSQL_DB_name -v password="'$LOGIN_PASS'" -v email="'$LOGIN_EMAIL'" -f ./Postgres/init.sql
+      # - psql "postgres://$PSQL_USER:$PSQL_PASS@$PSQL_HOST:$PSQL_PORT/$PSQL_DB_name" -f ./Postgres/init.sql
 
   helm:install-MongoDB:
     desc: Install MongoDB chart
