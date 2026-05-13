@@ -293,8 +293,13 @@ Enhancements by Rabie:
 - KIND support
 - Taskfile automation
 - Devbox env setup
-- Helm-based provisioning
-- Improved testing
+- Improved testing by adding temporary queue to receive mp3 id as a return from video upload to be used for downloading, instead of getting  the id from the email which broke the testing automation
+- added liveness/readiness probes to svcs to enhance healing and observability
+- added init containers to svc to wait for dbs and rmq to enhance reliability and forcing start ordering
+- added pvc to postgres deploy so config can survive restarts
+- fixed dbs storage config and make it more dynamic by using kind standard provisioner and removed un used storage classes
+- enhanced the microservices codes by added while loop while connecting to rmq to enhance self healing when rmq crashes or restarts
+- added extra mounts in kind to be used for pv/pvcs to simulate permanent storage for dbs and rmq
 - Documentation
 
 ---
