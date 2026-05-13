@@ -12,18 +12,64 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 8
+      maxSurge: 2
   template:
     metadata:
       labels:
         app: notification
     spec:
+      initContainers:
+        # 1. Wait for RabbitMQ using dynamic Host and Port
+        - name: wait-for-rabbitmq
+          image: busybox:latest
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: notification-configmap
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: notification-configmap
+                  key: RABBITMQ_PORT
+          command:
+            - sh
+            - -c
+            - "until nc -zv $RABBITMQ_HOST $RABBITMQ_PORT; do echo 'Waiting for RabbitMQ...'; sleep 2; done;"
+
       containers:
         - name: notification
           image: rabeea2100/notification
           # imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
           envFrom:
             - configMapRef:
                 name: notification-configmap
             - secretRef:
                 name: notification-secret
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

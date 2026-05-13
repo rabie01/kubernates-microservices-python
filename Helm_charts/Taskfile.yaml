@@ -24,7 +24,7 @@ tasks:
     cmds:
       - |
         echo "⏳ Waiting for PostgreSQL to become available..."
-        for i in {1..10}; do
+        for i in {1..20}; do
           if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d $PSQL_DB_name; then
             echo "✅ PostgreSQL is ready!"
             exit 0
@@ -94,3 +94,20 @@ tasks:
     cmds:
       - echo "listing all charts"
       - helm list -n $NAMESPACE 
+
+  helm:delete-all-charts:
+    desc: list all charts
+    cmds:
+      - echo "deleting all charts"
+      - helm list -n $NAMESPACE --short | xargs -L1 helm uninstall
+
+  helm:delete-all-charts-pvcs:
+    desc: list all charts
+    cmds:
+      - echo "deleting all charts"
+      - helm list -n $NAMESPACE --short | xargs -L1 helm uninstall
+      - echo "deleting all pvcs"
+      - kubectl delete pvc --all -n myproject
+
+
+

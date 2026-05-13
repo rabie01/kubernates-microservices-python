@@ -3,5 +3,9 @@ kind: ConfigMap
 metadata:
   name: notification-configmap
 data:
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  mongoDB_HOST: "mongodb"
+  mongoDB_PORT: "27017"
   MP3_QUEUE: "mp3"
   VIDEO_QUEUE: "video"

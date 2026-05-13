@@ -1,3 +1,5 @@
 assets/audio.mp3
 src/fid.txt
 src/.jwt_token
+kind-cluster-setup/mnt/*/*
+**/__pycache__/

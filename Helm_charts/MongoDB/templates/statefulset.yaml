@@ -14,6 +14,8 @@ spec:
         app: database
         selector: mongodb
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: kind-worker # Matches the first worker node in the kind cluster
       containers:
       - name: mongodb        
         image: mongo:4.0.8
@@ -68,4 +70,4 @@ spec:
             path: mongo.conf
       - name: mongodb-data
         persistentVolumeClaim:
-          claimName: mongodb-pvc
+          claimName: mongodb-pvc-standard

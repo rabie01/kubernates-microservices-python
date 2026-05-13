@@ -12,12 +12,51 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 8
+      maxSurge: 2
   template:
     metadata:
       labels:
         app: converter
     spec:
+      initContainers:
+        # 1. Wait for RabbitMQ
+        - name: wait-for-rabbitmq
+          image: busybox:latest
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: converter-configmap
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: converter-configmap
+                  key: RABBITMQ_PORT
+          command:
+            - sh
+            - -c
+            - "until nc -zv $RABBITMQ_HOST $RABBITMQ_PORT; do echo 'Waiting for RabbitMQ...'; sleep 2; done;"
+        
+        # 2. Wait for MongoDB
+        - name: wait-for-mongodb
+          image: busybox:latest
+          env:
+            - name: MONGODB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: converter-configmap
+                  key: MONGODB_HOST
+            - name: MONGODB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: converter-configmap
+                  key: MONGODB_PORT
+          command:
+            - sh
+            - -c
+            - "until nc -zv $MONGODB_HOST $MONGODB_PORT; do echo 'Waiting for MongoDB...'; sleep 2; done;"
+
       containers:
         - name: converter
           image: rabeea2100/converter

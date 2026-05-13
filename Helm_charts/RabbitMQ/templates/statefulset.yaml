@@ -12,6 +12,8 @@ spec:
       labels:
         app: rabbitmq
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: kind-worker2 # Matches the 2nd worker node in the kind cluster
       containers:
         - name: rabbitmq
           image: rabbitmq:3-management
@@ -38,8 +40,9 @@ spec:
                 - rabbitmq-diagnostics -q ping
             initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 5
             failureThreshold: 6
       volumes:
         - name: rabbitmq-volume
           persistentVolumeClaim:
-            claimName: rabbitmq-pvc
+            claimName: rabbitmq-pvc-standard

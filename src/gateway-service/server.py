@@ -1,4 +1,4 @@
-import os, gridfs, pika, json
+import os, gridfs, pika, json, time
 from flask import Flask, request, send_file, jsonify
 from flask_pymongo import PyMongo
 from auth import validate
@@ -16,8 +16,40 @@ mongo_mp3 = PyMongo(server, uri=os.environ.get('MONGODB_MP3S_URI'))
 fs_videos = gridfs.GridFS(mongo_video.db)
 fs_mp3s = gridfs.GridFS(mongo_mp3.db)
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host="rabbitmq", heartbeat=0))
-channel = connection.channel()
+# Global connection and channel - lazy initialized
+connection = None
+channel = None
+
+def get_channel(max_retries=5):
+    """Lazy initialize and return RabbitMQ channel with retry logic."""
+    global connection, channel
+    
+    if channel is not None and not channel.is_closed:
+        return channel
+    
+    for attempt in range(max_retries):
+        try:
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host="rabbitmq",
+                    heartbeat=600,  # Enable heartbeat (10 minutes)
+                    connection_attempts=1,
+                    socket_timeout=5.0
+                )
+            )
+            channel = connection.channel()
+            print(f"Successfully connected to RabbitMQ on attempt {attempt + 1}")
+            return channel
+        except pika.exceptions.AMQPConnectionError as e:
+            print(f"RabbitMQ connection attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                wait_time = min(2 ** attempt, 30)  # Exponential backoff, max 30s
+                print(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                raise
+    
+    return channel
 
 @server.route("/login", methods=["POST"])
 def login():
@@ -41,10 +73,15 @@ def upload():
     if len(request.files) != 1:
         return "exactly 1 file required", 400
 
-    # f = next(iter(request.files.values()))
-    for _, f in request.files.items():
-        result, status = util.upload(f, fs_videos, channel, access)
-    return jsonify(result), status
+    try:
+        ch = get_channel()
+        # f = next(iter(request.files.values()))
+        for _, f in request.files.items():
+            result, status = util.upload(f, fs_videos, ch, access)
+        return jsonify(result), status
+    except Exception as e:
+        print(f"Upload error: {e}")
+        return "service unavailable", 503
         
 
 @server.route("/download", methods=["GET"])
@@ -71,6 +108,18 @@ def download():
 
     return "not authorized", 401
 
+
+@server.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint for Kubernetes liveness/readiness probes."""
+    try:
+        # Check MongoDB connections
+        mongo_video.db.command('ping')
+        mongo_mp3.db.command('ping')
+        return {"status": "healthy"}, 200
+    except Exception as e:
+        print(f"Health check failed: {e}")
+        return {"status": "unhealthy"}, 503
 
 if __name__ == "__main__":
     server.run(host="0.0.0.0", port=8080)

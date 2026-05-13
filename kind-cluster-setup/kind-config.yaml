@@ -24,11 +24,24 @@ nodes:
       #   protocol: TCP
   - role: worker
     extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
+    # - hostPath: /var/run/docker.sock
+    #   containerPath: /var/run/docker.sock
+    # Map storage for MongoDB on the first worker
+    - hostPath: ./mnt/data/mongodb
+      containerPath: /var/local-path-provisioner/
   - role: worker
     extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
+    # - hostPath: /var/run/docker.sock
+    #   containerPath: /var/run/docker.sock
+    # Map storage for RabbitMQ on the second worker
+    - hostPath: ./mnt/data/rabbitmq
+      containerPath: /var/local-path-provisioner/
+  - role: worker
+  # - hostPath: /var/run/docker.sock
+  #   containerPath: /var/run/docker.sock
+  # Map storage for Postgres on the third worker
+    extraMounts:
+    - hostPath: ./mnt/data/postgres
+      containerPath: /var/local-path-provisioner/
 
 

@@ -5,5 +5,7 @@ metadata:
 data:
   MP3_QUEUE: "mp3"
   VIDEO_QUEUE: "video"
-  MONGODB_URI: "mongodb://rabie:rabie2025@mongodb:27017/mp3s?authSource=admin" #nodeip:nodeport
   RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  MONGODB_HOST: mongodb
+  MONGODB_PORT: "27017"
