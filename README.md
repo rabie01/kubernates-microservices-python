@@ -300,6 +300,7 @@ Enhancements by Rabie:
 - fixed dbs storage config and make it more dynamic by using kind standard provisioner and removed un used storage classes
 - enhanced the microservices codes by added while loop while connecting to rmq to enhance self healing when rmq crashes or restarts
 - added extra mounts in kind to be used for pv/pvcs to simulate permanent storage for dbs and rmq
+- enhanced notification service observability and reliability by checking the success of emailing as well as the existence of credentials
 - Documentation
 
 ---

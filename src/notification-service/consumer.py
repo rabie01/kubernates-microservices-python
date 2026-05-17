@@ -2,6 +2,26 @@ import pika, sys, os, time, threading
 from send import email
 from flask import Flask
 
+
+class BackoffTracker:
+    def __init__(self):
+        self.failures = 0
+        self.base_delay = 2     # Initial wait time in seconds
+        self.max_delay = 300    # Caps the maximum delay at 5 minutes
+
+    def get_delay(self):
+        self.failures += 1
+        # Calculate delay: 2^failures (e.g., 2s, 4s, 8s, 16s...)
+        delay = min(self.base_delay ** self.failures, self.max_delay)
+        print(f"⚠️ Email failed. Backing off for {delay} seconds to protect IP...")
+        return delay
+
+    def reset(self):
+        self.failures = 0
+
+# Instantiate the tracker globally
+tracker = BackoffTracker()
+
 # Global connection and channel for health checks
 connection = None
 channel = None
@@ -19,6 +39,9 @@ def live():
 def ready():
     """Readiness endpoint: service can consume from RabbitMQ."""
     try:
+        if not os.getenv("GMAIL_ADDRESS") or not os.getenv("GMAIL_PASSWORD"):
+            print("🔴 GMAIL_ADDRESS or GMAIL_PASSWORD env vars are not set!")
+            return {"status": "not ready, missing gmail configuration"}, 503
         if channel is not None and not channel.is_closed:
             return {"status": "ready"}, 200
         return {"status": "not ready"}, 503
@@ -61,12 +84,22 @@ def main():
             channel.queue_declare(queue=queue_name, durable=True)
             health_status["status"] = "healthy"
 
+            # 🚀 2. Update your callback function to use the tracker
             def callback(ch, method, properties, body):
                 err = email.notification(body)
-                if err:
-                    ch.basic_nack(delivery_tag=method.delivery_tag)
+                
+                if err:                    
+                    # Negatively acknowledge and requeue the message safely
+                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+                    ch.stop_consuming()  # Stop consuming to trigger reconnection
+                    # 🚀 Explicitly raise an error to crash out of start_consuming()
+                    # and jump directly into the backoff sleep exception block below.
+                    raise RuntimeError("Email pipeline error triggered backoff")
                 else:
+                    # Success! Reset the failure counter back to 0
+                    tracker.reset()
                     ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
             channel.basic_consume(queue=queue_name, on_message_callback=callback)
 
@@ -91,10 +124,17 @@ def main():
             channel = None
             time.sleep(5)
         except Exception as e:
-            print(f"❌ Unexpected error: {e}. Retrying in 5 seconds...")
+            # 🚀 This is where email failures drop out to!
+            # The backoff sleep happens safely here without freezing RabbitMQ heartbeats.
             health_status["status"] = "unhealthy"
+            
+            if connection is not None and not connection.is_closed:
+                connection.close()
             channel = None
-            time.sleep(5)
+            
+            delay = tracker.get_delay()
+            print(f"⚠️ Email processing pipeline failed. Applying backoff safety delay: {delay}s...")
+            time.sleep(delay)
 
 
 if __name__ == "__main__":
