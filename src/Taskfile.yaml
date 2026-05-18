@@ -141,7 +141,7 @@ tasks:
       - echo "kubectl debug -it <pod-name> -n <namespace> --image=busybox -- sh" #debug into a pod with a busybox container
       - echo "kubectl debug node/<node-name> -it --image=busybox -- chroot /host sh" #debug into a node with a busybox container and chroot to the host filesystem
       - echo "kubectl debug -it <pod-name> -n <namespace> --image=busybox --target=container-name -- sh" #debug into a specific container in a pod 
-      - echo "kubectl exec -it postgres-deploy-5cd7655b58-7982n -- psql -U rabie -d authdb -c "\dt" #list tables in authdb
+      - echo 'kubectl exec -it postgres-deploy-5cd7655b58-7982n -- psql -U rabie -d authdb -c "\dt"' #list tables in authdb
       - echo "pg_isready -h  localhost -p 30003 -U rabie -d authdb" #check if postgres is ready locally through the nodeport
 
 

@@ -7,7 +7,6 @@ tasks:
     desc: Install all Helm charts
     deps:
       - helm:install-PostgreSQL
-      - postgres:init
       - helm:install-MongoDB
       - helm:install-RabbitMQ  
       - rabbitmq:create-queues
@@ -18,30 +17,6 @@ tasks:
     cmds:
       - echo "Installing PostgreSQL chart"
       - helm upgrade --install postgres ./Postgres --namespace $NAMESPACE --create-namespace
-
-  postgres:wait:
-    desc: Wait until PostgreSQL is ready
-    cmds:
-      - |
-        echo "⏳ Waiting for PostgreSQL to become available..."
-        for i in {1..20}; do
-          if pg_isready -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d $PSQL_DB_name; then
-            echo "✅ PostgreSQL is ready!"
-            exit 0
-          fi
-          sleep 5
-        done
-        echo "❌ PostgreSQL did not become ready in time."
-        exit 1
-
-
-  postgres:init:
-    desc: Run init.sql on the authdb 
-    deps: [postgres:wait]
-    cmds:
-      - echo "📦 Applying init.sql to PostgreSQL..."
-      - PGPASSWORD=$PSQL_PASS psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d $PSQL_DB_name -v password="'$LOGIN_PASS'" -v email="'$LOGIN_EMAIL'" -f ./Postgres/init.sql
-      # - psql "postgres://$PSQL_USER:$PSQL_PASS@$PSQL_HOST:$PSQL_PORT/$PSQL_DB_name" -f ./Postgres/init.sql
 
   helm:install-MongoDB:
     desc: Install MongoDB chart
@@ -107,7 +82,7 @@ tasks:
       - echo "deleting all charts"
       - helm list -n $NAMESPACE --short | xargs -L1 helm uninstall
       - echo "deleting all pvcs"
-      - kubectl delete pvc --all -n myproject
+      - kubectl delete pvc --all -n $NAMESPACE
 
 
 

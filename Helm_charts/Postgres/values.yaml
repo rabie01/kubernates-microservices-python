@@ -9,3 +9,5 @@ container:
     user: rabie
     password: rabie2025
     db: authdb
+    login_email: rabeea2100@yahoo.com
+    login_pass: 123456

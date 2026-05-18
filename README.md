@@ -301,6 +301,7 @@ Enhancements by Rabie:
 - enhanced the microservices codes by added while loop while connecting to rmq to enhance self healing when rmq crashes or restarts
 - added extra mounts in kind to be used for pv/pvcs to simulate permanent storage for dbs and rmq
 - enhanced notification service observability and reliability by checking the success of emailing as well as the existence of credentials
+- enhanced postgres helm chart to add the init.sql to the deployment instead of manual running after deployment
 - Documentation
 
 ---
